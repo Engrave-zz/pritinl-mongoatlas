@@ -3,6 +3,11 @@ FROM ubuntu:16.04
 ARG PRITUNL_VERSION="*"
 ENV PRITUNL_VERSION=${PRITUNL_VERSION}
 
+ARG MONGODB_VERSION="*"
+ENV MONGODB_VERSION=${MONGODB_VERSION}
+
+LABEL MAINTAINER="Christian Winther <jippignu@gmail.com>"
+
 COPY --chown=root:root ["docker-install.sh", "/root"]
 RUN bash /root/docker-install.sh
 

@@ -1,0 +1,32 @@
+#!/bin/sh
+set -e
+
+[ -d /dev/net ] ||
+    mkdir -p /dev/net
+[ -c /dev/net/tun ] ||
+    mknod /dev/net/tun c 10 200
+
+touch /var/log/pritunl.log
+touch /var/run/pritunl.pid
+/bin/rm /var/run/pritunl.pid
+
+if [ "$1" = "bash" ]; then
+    exec "$@"
+    exit $?
+fi
+echo "MONGODB_ATLAS_GROUP_ID:"$MONGODB_ATLAS_GROUP_ID
+echo "MONGODB_ATLAS_CLUSTER_NAME:"$MONGODB_ATLAS_CLUSTER_NAME
+echo "MONGODB_ATLAS_USERNAME:"$MONGODB_ATLAS_USERNAME
+# settings settings
+URI=`curl -u "$MONGODB_ATLAS_USERNAME:$MONGODB_ATLAS_API_KEY" --digest "https://cloud.mongodb.com/api/atlas/v1.0/groups/$MONGODB_ATLAS_GROUP_ID/clusters/$MONGODB_ATLAS_CLUSTER_NAME" | jq -r '.mongoURIWithOptions'`
+echo "MONGODB_ATLAS_CONNECTION_STRING:"$URI
+export MONGODB_URI=$(echo $URI | sed "s|//|&$MONGODB_ATLAS_USERNAME:$MONGODB_ATLAS_DB_PASSWORD@|")
+export PRITUNL_REVERSE_PROXY=${PRITUNL_REVERSE_PROXY:-false}
+export PRITUNL_SERVER_SSL=${PRITUNL_SERVER_SSL:-true}
+export PRITUNL_SERVER_PORT=${PRITUNL_SERVER_PORT:-443}
+exec /usr/bin/pritunl set-mongodb "${MONGODB_URI}"
+exec /usr/bin/pritunl set app.reverse_proxy ${PRITUNL_REVERSE_PROXY}
+exec /usr/bin/pritunl set app.server_ssl ${PRITUNL_SERVER_SSL}
+exec /usr/bin/pritunl set app.server_port ${PRITUNL_SERVER_PORT}
+cat /etc/pritunl.conf
+exec /usr/bin/pritunl start

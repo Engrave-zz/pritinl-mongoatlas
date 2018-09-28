@@ -8,7 +8,7 @@ ENV MONGODB_VERSION=${MONGODB_VERSION}
 
 LABEL MAINTAINER="Christian Winther <jippignu@gmail.com>"
 
-COPY --chown=root:root ["docker-install.sh", "/root"]
+COPY ["docker-install.sh", "/root"]
 RUN bash /root/docker-install.sh
 
 ADD start-pritunl /bin/start-pritunl
